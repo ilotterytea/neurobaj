@@ -1,2 +1,2 @@
 # neurobaj
-![Build & release badge](https://github.com/ilotterytea/bot/actions/workflows/build.yml/badge.svg)
+![Build & release badge](https://github.com/ilotterytea/neurobaj/actions/workflows/build.yml/badge.svg)
