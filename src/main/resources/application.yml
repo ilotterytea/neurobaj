@@ -1,0 +1,8 @@
+micronaut:
+  application:
+    name: neurobajapi
+
+netty:
+  default:
+    allocator:
+      max-order: 3
