@@ -24,6 +24,7 @@ dependencies {
     annotationProcessor("io.micronaut.microstream:micronaut-microstream-annotations")
     implementation("io.micronaut:micronaut-http-client")
     implementation("io.micronaut:micronaut-jackson-databind")
+    implementation("io.micronaut.views:micronaut-views-handlebars")
     implementation("io.micronaut.microstream:micronaut-microstream")
     implementation("io.micronaut.microstream:micronaut-microstream-annotations")
     runtimeOnly("ch.qos.logback:logback-classic")
