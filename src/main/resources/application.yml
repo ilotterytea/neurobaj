@@ -1,6 +1,13 @@
 micronaut:
   application:
     name: neurobajapi
+  router:
+    static-resources:
+      default:
+        paths:
+          - classpath:static
+        mapping: /static/**/*
+        enabled: true
 
 netty:
   default:
