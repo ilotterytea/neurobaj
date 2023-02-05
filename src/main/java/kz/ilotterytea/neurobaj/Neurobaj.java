@@ -2,9 +2,13 @@ package kz.ilotterytea.neurobaj;
 
 import com.github.twitch4j.TwitchClient;
 import com.github.twitch4j.TwitchClientBuilder;
+import com.github.twitch4j.chat.events.channel.DeleteMessageEvent;
+import com.github.twitch4j.chat.events.channel.IRCMessageEvent;
+import com.github.twitch4j.chat.events.channel.UserBanEvent;
 import com.github.twitch4j.helix.domain.User;
 import kz.ilotterytea.neurobaj.neural.markov.MarkovChainHandler;
 import kz.ilotterytea.neurobaj.storage.PropertiesLoader;
+import kz.ilotterytea.neurobaj.twitch.MessageHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,6 +63,10 @@ public class Neurobaj {
                     twitchBot.getChat().joinChannel(user.getLogin());
                 }
             }
+
+            twitchBot.getEventManager().onEvent(IRCMessageEvent.class, MessageHandler::ircMessageEvent);
+            twitchBot.getEventManager().onEvent(DeleteMessageEvent.class, MessageHandler::deleteMessageEvent);
+            twitchBot.getEventManager().onEvent(UserBanEvent.class, MessageHandler::userBanEvent);
         } else {
             LOG.warn("The TWITCH_CLIENTID and TWITCH_ACCESSTOKEN fields must be filled out in your config.properties if you want to use Twitch chats as your chain base source!");
         }
