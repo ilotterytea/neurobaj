@@ -13,6 +13,7 @@ import kz.ilotterytea.neurobaj.utils.StringUtils;
 
 import java.lang.management.ManagementFactory;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author ilotterytea
@@ -128,6 +129,29 @@ public class GeneralAPIController {
                 map.put(user.getLogin(), false);
             }
         }
+
+        return HttpResponse.ok(map);
+    }
+
+    @Get(
+            value = "/channels",
+            produces = MediaType.APPLICATION_JSON
+    )
+    MutableHttpResponse<Map<String, Object>> getChannels() {
+        Neurobaj baj = Neurobaj.getInstance();
+        Map<String, Object> map = new HashMap<>();
+
+        ArrayList<String> savedChannels = new ArrayList<>(baj.getMarkov().getAllChains().keySet());
+        ArrayList<String> joinedChannels = baj.getTwitchBot().getHelix().getUsers(
+                        baj.getProperties().getProperty("TWITCH_ACCESSTOKEN", null),
+                        null,
+                        new ArrayList<>(baj.getTwitchBot().getChat().getChannels())
+                ).execute().getUsers()
+                .stream()
+                .map(User::getId).collect(Collectors.toCollection(ArrayList::new));
+
+        map.put("joined", joinedChannels);
+        map.put("saved", savedChannels);
 
         return HttpResponse.ok(map);
     }
