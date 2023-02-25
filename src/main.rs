@@ -3,7 +3,7 @@
 extern crate rocket;
 
 use once_cell::sync::Lazy;
-use std::sync::Mutex;
+use std::{fs::File, path::Path, sync::Mutex};
 use tokio_js_set_interval::set_interval;
 use twitch_irc::{
     login::StaticLoginCredentials, ClientConfig, SecureTCPTransport, TwitchIRCClient,
@@ -14,6 +14,22 @@ mod routes;
 
 static CHAINS: Lazy<Mutex<chains::ChainManager>> =
     Lazy::new(|| Mutex::new(chains::ChainManager::new()));
+
+static CHANNELS: Lazy<Mutex<Vec<usize>>> = Lazy::new(|| {
+    let mut _vec: Vec<usize> = Vec::new();
+
+    if !Path::new("./channels.json").exists() {
+        return Mutex::new(_vec);
+    }
+
+    let file = File::open("./channels.json").unwrap();
+    let mut _v: Vec<usize> =
+        serde_json::from_reader(file).expect("JSON file with channels is not well formatted!");
+
+    _vec.append(&mut _v);
+
+    Mutex::new(_vec)
+});
 
 #[tokio::main]
 async fn main() {
@@ -49,6 +65,18 @@ async fn main() {
         .mount("/api/v1", routes![routes::gen_text])
         .launch();
 
-    set_interval!(|| { CHAINS.lock().unwrap().save("./chains.json") }, 90000);
+    set_interval!(
+        || {
+            CHAINS.lock().unwrap().save("./chains.json");
+
+            std::fs::write(
+                "./channels.json",
+                serde_json::to_string_pretty(&CHANNELS.lock().unwrap().to_vec()).unwrap(),
+            )
+            .unwrap();
+            println!("SAVED CHANNELS!");
+        },
+        90000
+    );
     join_handle.await.unwrap();
 }
