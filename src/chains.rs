@@ -1,14 +1,19 @@
-#[derive(Debug, Clone)]
+use std::{
+    fs::{self, File},
+    path::Path,
+};
+
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChainSignature {
-    pub msg_id: String,
-    pub author_id: String,
-    pub channel_id: String,
-    pub timestamp: i64,
+    pub msg_id: Option<String>,
+    pub author_id: Option<String>,
+    pub channel_id: Option<String>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Chain {
-    pub id: usize,
     pub from_word: String,
     pub to_word: String,
 
@@ -26,7 +31,6 @@ impl Chain {
 
         for w in s {
             chains.push(Self {
-                id: chains.len() + 1,
                 from_word: String::from(prev_word),
                 to_word: String::from(w),
                 from_word_signature: None,
@@ -37,7 +41,6 @@ impl Chain {
         }
 
         chains.push(Self {
-            id: chains.len() + 1,
             from_word: prev_word.to_string(),
             to_word: "\\x03".to_string(),
             from_word_signature: None,
@@ -127,5 +130,31 @@ impl ChainManager {
         }
 
         message
+    }
+
+    pub fn load(&mut self, file_path: &str) -> bool {
+        if !Path::new(file_path).exists() {
+            println!("Chain file ({}) not exists! Nothing to load.", file_path);
+            return false;
+        }
+
+        let file = File::open(file_path).unwrap();
+        let mut loaded: Vec<Chain> =
+            serde_json::from_reader(file).expect("JSON file with chains is not well formatted!");
+
+        self.chains.append(&mut loaded);
+
+        println!("LOADED {} CHAINS!", loaded.len());
+        true
+    }
+
+    pub fn save(&self, file_path: &str) {
+        fs::write(
+            file_path,
+            serde_json::to_string_pretty(&self.chains).unwrap(),
+        )
+        .unwrap();
+
+        println!("SAVED!");
     }
 }
