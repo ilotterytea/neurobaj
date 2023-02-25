@@ -64,7 +64,7 @@ async fn main() {
     }
 
     rocket::ignite()
-        .mount("/api/v1", routes![routes::gen_text])
+        .mount("/api/v1", routes![routes::gen_text, routes::status])
         .launch();
 
     set_interval!(
