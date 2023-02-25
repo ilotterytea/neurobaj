@@ -15,20 +15,20 @@ mod routes;
 static CHAINS: Lazy<Mutex<chains::ChainManager>> =
     Lazy::new(|| Mutex::new(chains::ChainManager::new()));
 
-static CHANNELS: Lazy<Mutex<Vec<usize>>> = Lazy::new(|| {
-    let mut _vec: Vec<usize> = Vec::new();
+static CHANNELS: Lazy<Vec<String>> = Lazy::new(|| {
+    let mut _vec: Vec<String> = Vec::new();
 
     if !Path::new("./channels.json").exists() {
-        return Mutex::new(_vec);
+        return _vec;
     }
 
     let file = File::open("./channels.json").unwrap();
-    let mut _v: Vec<usize> =
+    let mut _v: Vec<String> =
         serde_json::from_reader(file).expect("JSON file with channels is not well formatted!");
 
     _vec.append(&mut _v);
 
-    Mutex::new(_vec)
+    _vec
 });
 
 #[tokio::main]
@@ -59,7 +59,9 @@ async fn main() {
         }
     });
 
-    client.join("ilotterytea".to_owned()).unwrap();
+    for name in &CHANNELS.to_vec() {
+        client.join(name.to_owned()).unwrap();
+    }
 
     rocket::ignite()
         .mount("/api/v1", routes![routes::gen_text])
@@ -71,7 +73,7 @@ async fn main() {
 
             std::fs::write(
                 "./channels.json",
-                serde_json::to_string_pretty(&CHANNELS.lock().unwrap().to_vec()).unwrap(),
+                serde_json::to_string_pretty(&CHANNELS.to_vec()).unwrap(),
             )
             .unwrap();
             println!("SAVED CHANNELS!");
