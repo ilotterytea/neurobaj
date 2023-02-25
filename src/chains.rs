@@ -104,7 +104,7 @@ impl ChainManager {
                     chain = self
                         .chains
                         .iter()
-                        .find(|p| p.from_word.eq(&first_chain.unwrap().from_word));
+                        .find(|p| p.from_word.eq(&first_chain.unwrap().to_word));
 
                     if chain.is_none() {
                         break;
