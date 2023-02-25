@@ -1,4 +1,6 @@
 #![feature(proc_macro_hygiene, decl_macro, once_cell)]
+#[macro_use]
+extern crate rocket;
 
 use once_cell::sync::Lazy;
 use std::sync::Mutex;
@@ -10,4 +12,6 @@ static CHAINS: Lazy<Mutex<chains::ChainManager>> =
 
 fn main() {
     println!("Hello, world!");
+
+    rocket::ignite().launch();
 }
