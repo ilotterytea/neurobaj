@@ -1,17 +1,9 @@
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ChainSignature {
-    pub msg_id: &'static str,
-    pub author_id: &'static str,
-    pub channel_id: &'static str,
-    pub timestamp: u128,
-}
-
-impl Copy for ChainSignature {}
-
-impl Clone for ChainSignature {
-    fn clone(&self) -> Self {
-        *self
-    }
+    pub msg_id: String,
+    pub author_id: String,
+    pub channel_id: String,
+    pub timestamp: i64,
 }
 
 #[derive(Debug)]
