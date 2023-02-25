@@ -2,7 +2,6 @@
 #[macro_use]
 extern crate rocket;
 
-use chrono::Utc;
 use once_cell::sync::Lazy;
 use std::sync::Mutex;
 use twitch_irc::{
@@ -18,6 +17,7 @@ static CHAINS: Lazy<Mutex<chains::ChainManager>> =
 #[tokio::main]
 async fn main() {
     println!("Hello, world!");
+    CHAINS.lock().unwrap().load("./chains.json");
 
     let (mut incoming_messages, client) =
         TwitchIRCClient::<SecureTCPTransport, StaticLoginCredentials>::new(ClientConfig::default());
@@ -31,10 +31,9 @@ async fn main() {
                     CHAINS.lock().unwrap().scan_text(
                         &msg.message_text,
                         Some(chains::ChainSignature {
-                            msg_id: msg.message_id,
-                            author_id: msg.sender.id,
-                            channel_id: msg.channel_id,
-                            timestamp: Utc::now().timestamp(),
+                            msg_id: Some(msg.message_id),
+                            author_id: Some(msg.sender.id),
+                            channel_id: Some(msg.channel_id),
                         }),
                     );
                 }
