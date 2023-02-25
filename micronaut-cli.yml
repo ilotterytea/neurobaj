@@ -1,0 +1,6 @@
+applicationType: default
+defaultPackage: kz.ilotterytea.neurobaj
+testFramework: junit
+sourceLanguage: java
+buildTool: gradle
+features: [app-name, gradle, http-client, jackson-databind, java, java-application, junit, logback, micronaut-build, microstream, microstream-rest, netty-server, readme, shade, yaml]
