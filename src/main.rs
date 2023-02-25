@@ -2,6 +2,7 @@
 #[macro_use]
 extern crate rocket;
 
+use chrono::Utc;
 use once_cell::sync::Lazy;
 use std::sync::Mutex;
 use twitch_irc::{
@@ -24,6 +25,21 @@ async fn main() {
     let join_handle = tokio::spawn(async move {
         while let Some(message) = incoming_messages.recv().await {
             println!("Received message: {:?}", message);
+
+            match message {
+                twitch_irc::message::ServerMessage::Privmsg(msg) => {
+                    CHAINS.lock().unwrap().scan_text(
+                        &msg.message_text,
+                        Some(chains::ChainSignature {
+                            msg_id: msg.message_id,
+                            author_id: msg.sender.id,
+                            channel_id: msg.channel_id,
+                            timestamp: Utc::now().timestamp(),
+                        }),
+                    );
+                }
+                _ => {}
+            }
         }
     });
 
