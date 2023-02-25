@@ -4,6 +4,7 @@ extern crate rocket;
 
 use once_cell::sync::Lazy;
 use std::sync::Mutex;
+use tokio_js_set_interval::set_interval;
 use twitch_irc::{
     login::StaticLoginCredentials, ClientConfig, SecureTCPTransport, TwitchIRCClient,
 };
@@ -48,5 +49,6 @@ async fn main() {
         .mount("/api/v1", routes![routes::gen_text])
         .launch();
 
+    set_interval!(|| { CHAINS.lock().unwrap().save("./chains.json") }, 90000);
     join_handle.await.unwrap();
 }
