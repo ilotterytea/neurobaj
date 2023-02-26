@@ -60,7 +60,7 @@ impl ChainManager {
         Self { chains: Vec::new() }
     }
 
-    pub fn scan_text(&mut self, text: &String, text_signature: Option<ChainSignature>) {
+    pub fn scan_text(&mut self, text: &str, text_signature: Option<ChainSignature>) {
         let tokens = Chain::tokenize(text.to_owned());
 
         for mut token in tokens {
@@ -81,7 +81,7 @@ impl ChainManager {
         }
     }
 
-    pub fn generate_text(&self, text: &String) -> String {
+    pub fn generate_text(&self, text: &str) -> String {
         let s = text.split(' ').collect::<Vec<&str>>();
         let mut message = String::new();
 
