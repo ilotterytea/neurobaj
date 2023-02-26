@@ -25,7 +25,7 @@ impl Chain {
     pub fn tokenize(text: String) -> Vec<Self> {
         let mut chains: Vec<Self> = Vec::new();
 
-        let s = text.split(" ").collect::<Vec<&str>>();
+        let s = text.split(' ').collect::<Vec<&str>>();
 
         let mut prev_word = "\\x02";
 
@@ -82,7 +82,7 @@ impl ChainManager {
     }
 
     pub fn generate_text(&self, text: &String) -> String {
-        let s = text.split(" ").collect::<Vec<&str>>();
+        let s = text.split(' ').collect::<Vec<&str>>();
         let mut message = String::new();
 
         for w in s {
@@ -97,7 +97,7 @@ impl ChainManager {
             loop {
                 if next_chain.is_none() {
                     message.push_str(&first_chain.unwrap().from_word.to_owned());
-                    message.push_str(" ");
+                    message.push(' ');
 
                     let chain = self
                         .chains
@@ -111,7 +111,7 @@ impl ChainManager {
                     next_chain = chain;
                 } else {
                     message.push_str(&next_chain.unwrap().from_word);
-                    message.push_str(" ");
+                    message.push(' ');
 
                     let chain = self
                         .chains
