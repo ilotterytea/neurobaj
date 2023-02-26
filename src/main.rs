@@ -72,13 +72,6 @@ async fn main() {
     set_interval!(
         || {
             CHAINS.lock().unwrap().save("./chains.json");
-
-            std::fs::write(
-                "./channels.json",
-                serde_json::to_string_pretty(&CHANNELS.to_vec()).unwrap(),
-            )
-            .unwrap();
-            println!("SAVED CHANNELS!");
         },
         90000
     );
