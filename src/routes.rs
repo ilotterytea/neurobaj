@@ -1,7 +1,7 @@
 use rocket_contrib::json::Json;
 use serde::{Deserialize, Serialize};
 
-use crate::{CHAINS, CHANNELS};
+use crate::{CHAINS, CHANNELS, ELAPSED_TIME};
 
 #[derive(Serialize, Deserialize)]
 pub struct Response<T> {
@@ -13,6 +13,7 @@ pub struct Response<T> {
 pub struct Status {
     pub total_chains: usize,
     pub joined_channels: Vec<String>,
+    pub uptime_ms: u128,
 }
 
 #[get("/gen?<message>")]
@@ -27,6 +28,7 @@ pub fn status() -> Json<Response<Status>> {
         data: Status {
             total_chains: CHAINS.lock().unwrap().chains.len(),
             joined_channels: CHANNELS.to_vec(),
+            uptime_ms: ELAPSED_TIME.lock().unwrap().elapsed().as_millis(),
         },
     })
 }

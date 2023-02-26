@@ -3,7 +3,7 @@
 extern crate rocket;
 
 use once_cell::sync::Lazy;
-use std::{fs::File, path::Path, sync::Mutex};
+use std::{fs::File, path::Path, sync::Mutex, time::Instant};
 use tokio_js_set_interval::set_interval;
 use twitch_irc::{
     login::StaticLoginCredentials, ClientConfig, SecureTCPTransport, TwitchIRCClient,
@@ -30,6 +30,8 @@ static CHANNELS: Lazy<Vec<String>> = Lazy::new(|| {
 
     _vec
 });
+
+static ELAPSED_TIME: Lazy<Mutex<Instant>> = Lazy::new(|| Mutex::new(Instant::now()));
 
 #[tokio::main]
 async fn main() {
