@@ -67,7 +67,7 @@ impl ChainManager {
             token.to_word_signature = text_signature.clone();
             token.from_word_signature = text_signature.clone();
 
-            let mut chain: &mut Option<&mut Chain> = &mut self
+            let chain: &mut Option<&mut Chain> = &mut self
                 .chains
                 .iter_mut()
                 .find(|p| p.from_word.eq(&token.from_word));
@@ -95,13 +95,11 @@ impl ChainManager {
             let mut next_chain: Option<&Chain> = None;
 
             loop {
-                let mut chain: Option<&Chain> = None;
-
                 if next_chain.is_none() {
                     message.push_str(&first_chain.unwrap().from_word.to_owned());
                     message.push_str(" ");
 
-                    chain = self
+                    let chain = self
                         .chains
                         .iter()
                         .find(|p| p.from_word.eq(&first_chain.unwrap().to_word));
@@ -115,7 +113,7 @@ impl ChainManager {
                     message.push_str(&next_chain.unwrap().from_word);
                     message.push_str(" ");
 
-                    chain = self
+                    let chain = self
                         .chains
                         .iter()
                         .find(|p| p.from_word.eq(&next_chain.unwrap().to_word));
