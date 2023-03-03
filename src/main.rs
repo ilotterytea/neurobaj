@@ -2,8 +2,9 @@
 #[macro_use]
 extern crate rocket;
 
+use diesel::{Connection, SqliteConnection};
 use once_cell::sync::Lazy;
-use std::{fs::File, path::Path, sync::Mutex, time::Instant};
+use std::{env, fs::File, path::Path, sync::Mutex, time::Instant};
 use tokio_js_set_interval::set_interval;
 use twitch_irc::{
     login::StaticLoginCredentials, ClientConfig, SecureTCPTransport, TwitchIRCClient,
@@ -76,4 +77,12 @@ async fn main() {
         90000
     );
     join_handle.await.unwrap();
+}
+
+pub fn establish_connection() -> SqliteConnection {
+    dotenv::dotenv().ok();
+
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set!");
+    SqliteConnection::establish(&database_url)
+        .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
 }
