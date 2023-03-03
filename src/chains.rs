@@ -1,158 +1,134 @@
-use std::{
-    fs::{self, File},
-    path::Path,
-};
+use diesel::{insert_into, update, ExpressionMethods, QueryDsl, RunQueryDsl, SqliteConnection};
 
-use serde::{Deserialize, Serialize};
+use crate::models::{Chain, NewChain, NewSignature, Signature};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChainSignature {
-    pub msg_id: Option<String>,
-    pub author_id: Option<String>,
-    pub channel_id: Option<String>,
-}
+pub fn tokenize_text(text: &str) -> Vec<(String, String)> {
+    let mut chains: Vec<(String, String)> = Vec::new();
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Chain {
-    pub from_word: String,
-    pub to_word: String,
+    let s = text.split(' ').collect::<Vec<&str>>();
 
-    pub from_word_signature: Option<ChainSignature>,
-    pub to_word_signature: Option<ChainSignature>,
-}
+    let mut prev_word = "\\x02";
 
-impl Chain {
-    pub fn tokenize(text: String) -> Vec<Self> {
-        let mut chains: Vec<Self> = Vec::new();
-
-        let s = text.split(' ').collect::<Vec<&str>>();
-
-        let mut prev_word = "\\x02";
-
-        for w in s {
-            chains.push(Self {
-                from_word: String::from(prev_word),
-                to_word: String::from(w),
-                from_word_signature: None,
-                to_word_signature: None,
-            });
-
-            prev_word = w;
-        }
-
-        chains.push(Self {
-            from_word: prev_word.to_string(),
-            to_word: "\\x03".to_string(),
-            from_word_signature: None,
-            to_word_signature: None,
-        });
-
-        chains
-    }
-}
-
-pub struct ChainManager {
-    pub chains: Vec<Chain>,
-}
-
-impl ChainManager {
-    pub fn new() -> Self {
-        Self { chains: Vec::new() }
+    for w in s {
+        chains.push((prev_word.to_string(), w.to_string()));
+        prev_word = w;
     }
 
-    pub fn scan_text(&mut self, text: &str, text_signature: Option<ChainSignature>) {
-        let tokens = Chain::tokenize(text.to_owned());
+    chains.push((prev_word.to_string(), "\\x03".to_string()));
 
-        for mut token in tokens {
-            token.to_word_signature = text_signature.clone();
-            token.from_word_signature = text_signature.clone();
+    chains
+}
+pub fn scan_text(
+    conn: &mut SqliteConnection,
+    user_id: &str,
+    channel_id: &str,
+    message_id: &str,
+    text: &str,
+) {
+    use crate::schema::chains::dsl::*;
 
-            let chain: &mut Option<&mut Chain> = &mut self
-                .chains
-                .iter_mut()
-                .find(|p| p.from_word.eq(&token.from_word));
+    let tokens = tokenize_text(text);
+    let signature = get_signature(conn, user_id, channel_id);
 
-            if chain.is_none() {
-                self.chains.push(token);
-            } else {
-                chain.as_mut().unwrap().to_word = token.to_word;
-                chain.as_mut().unwrap().to_word_signature = text_signature.clone();
-            }
+    for token in tokens {
+        let chain = chains
+            .filter(from_word.eq(token.0.as_str()))
+            .first::<Chain>(conn);
+
+        if chain.is_err() {
+            insert_into(chains).values(vec![NewChain {
+                from_word: token.0.as_str(),
+                to_word: token.1.as_str(),
+                to_word_signature_id: signature.id.clone(),
+                from_word_signature_id: signature.id.clone(),
+                msg_id: message_id,
+            }]);
+        } else {
+            update(chains.filter(from_word.eq(token.0.as_str())))
+                .set((
+                    to_word.eq(token.1.as_str()),
+                    to_word_signature_id.eq(signature.id.clone()),
+                ))
+                .execute(conn);
         }
     }
+}
+pub fn get_signature(conn: &mut SqliteConnection, user_id: &str, target_id: &str) -> Signature {
+    use crate::schema::signatures::dsl::*;
 
-    pub fn generate_text(&self, text: &str) -> String {
-        let s = text.split(' ').collect::<Vec<&str>>();
-        let mut message = String::new();
+    let mut signature = signatures
+        .filter(sender_id.eq(user_id.parse::<i32>().unwrap()))
+        .filter(channel_id.eq(target_id.parse::<i32>().unwrap()))
+        .first::<Signature>(conn);
 
-        for w in s {
-            let first_chain = &self.chains.iter().find(|p| p.from_word.eq(w));
+    if signature.is_err() {
+        insert_into(signatures)
+            .values(vec![NewSignature {
+                channel_id: target_id.parse::<i32>().unwrap(),
+                sender_id: user_id.parse::<i32>().unwrap(),
+            }])
+            .execute(conn);
 
-            if first_chain.is_none() || first_chain.unwrap().to_word.eq("\\x03") {
-                continue;
-            }
+        signature = signatures
+            .filter(sender_id.eq(user_id.parse::<i32>().unwrap()))
+            .filter(channel_id.eq(target_id.parse::<i32>().unwrap()))
+            .first::<Signature>(conn);
+    }
 
-            let mut next_chain: Option<&Chain> = None;
+    signature.unwrap()
+}
 
-            loop {
-                if next_chain.is_none() {
-                    message.push_str(&first_chain.unwrap().from_word.to_owned());
-                    message.push(' ');
+pub fn generate_text(conn: &mut SqliteConnection, initial_text: &str) -> String {
+    use crate::schema::chains::dsl::*;
 
-                    let chain = self
-                        .chains
-                        .iter()
-                        .find(|p| p.from_word.eq(&first_chain.unwrap().to_word));
+    let s = initial_text.split(' ').collect::<Vec<&str>>();
+    let mut message = String::new();
 
-                    if chain.is_none() {
-                        break;
-                    }
+    for w in s {
+        let first_chain = chains.filter(from_word.eq(w)).first::<Chain>(conn);
 
-                    next_chain = chain;
-                } else {
-                    message.push_str(&next_chain.unwrap().from_word);
-                    message.push(' ');
+        if first_chain.is_err() {
+            continue;
+        }
 
-                    let chain = self
-                        .chains
-                        .iter()
-                        .find(|p| p.from_word.eq(&next_chain.unwrap().to_word));
+        let _fc = first_chain.unwrap();
+        let mut next_chain: Option<Chain> = None;
 
-                    if chain.is_none() {
-                        break;
-                    }
+        loop {
+            if next_chain.is_none() {
+                message.push_str(_fc.from_word.as_str());
+                message.push(' ');
 
-                    next_chain = chain;
+                let chain = chains
+                    .filter(from_word.eq(_fc.to_word))
+                    .first::<Chain>(conn);
+
+                if chain.is_err() {
+                    break;
                 }
+
+                next_chain = Some(chain.unwrap());
+            } else {
+                let _nc = next_chain.unwrap();
+                message.push_str(_nc.from_word.as_str());
+                message.push(' ');
+
+                let chain = chains
+                    .filter(from_word.eq(_nc.to_word))
+                    .first::<Chain>(conn);
+
+                if chain.is_err() {
+                    break;
+                }
+
+                next_chain = Some(chain.unwrap());
             }
         }
-
-        message
     }
 
-    pub fn load(&mut self, file_path: &str) -> bool {
-        if !Path::new(file_path).exists() {
-            println!("Chain file ({}) not exists! Nothing to load.", file_path);
-            return false;
-        }
-
-        let file = File::open(file_path).unwrap();
-        let mut loaded: Vec<Chain> =
-            serde_json::from_reader(file).expect("JSON file with chains is not well formatted!");
-
-        self.chains.append(&mut loaded);
-
-        println!("LOADED {} CHAINS!", loaded.len());
-        true
+    if message.len() == 0 {
+        message.push_str("...");
     }
 
-    pub fn save(&self, file_path: &str) {
-        fs::write(
-            file_path,
-            serde_json::to_string_pretty(&self.chains).unwrap(),
-        )
-        .unwrap();
-
-        println!("SAVED!");
-    }
+    message
 }
