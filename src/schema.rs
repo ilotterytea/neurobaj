@@ -14,10 +14,12 @@ diesel::table! {
 diesel::table! {
     channels (id) {
         id -> Integer,
-        alias_id -> Integer,
+        alias_id -> Text,
         platform_id -> Integer,
-        channel_name -> Integer,
         ignore_phrases -> Nullable<Text>,
+        created_timestamp -> Integer,
+        last_timestamp -> Integer,
+        enabled -> Integer,
     }
 }
 

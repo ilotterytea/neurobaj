@@ -22,9 +22,11 @@ CREATE TABLE
 CREATE TABLE
   "channels" (
     "id" INTEGER NOT NULL,
-    "alias_id" INTEGER NOT NULL,
+    "alias_id" TEXT NOT NULL,
     "platform_id" INTEGER NOT NULL,
-    "channel_name" INTEGER NOT NULL,
     "ignore_phrases" TEXT,
+    "created_timestamp" INTEGER NOT NULL,
+    "last_timestamp" INTEGER NOT NULL,
+    "enabled" INTEGER NOT NULL DEFAULT 1,
     PRIMARY KEY ("id" AUTOINCREMENT)
   );
