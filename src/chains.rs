@@ -40,8 +40,8 @@ pub fn scan_text(
                 .values(vec![NewChain {
                     from_word: token.0.as_str(),
                     to_word: token.1.as_str(),
-                    to_word_signature_id: signature.id.clone(),
-                    from_word_signature_id: signature.id.clone(),
+                    to_word_signature_id: signature.id,
+                    from_word_signature_id: signature.id,
                     from_word_msg_id: message_id,
                     to_word_msg_id: message_id,
                 }])
@@ -51,8 +51,8 @@ pub fn scan_text(
             update(chains.filter(from_word.eq(token.0.as_str())))
                 .set((
                     to_word.eq(token.1.as_str()),
-                    to_word_signature_id.eq(signature.id.clone()),
-                    to_word_msg_id.eq(message_id.clone()),
+                    to_word_signature_id.eq(signature.id),
+                    to_word_msg_id.eq(message_id),
                 ))
                 .execute(conn)
                 .expect("Cannot update the values!");
