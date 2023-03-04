@@ -1,4 +1,8 @@
-use diesel::{insert_into, update, ExpressionMethods, QueryDsl, RunQueryDsl, SqliteConnection};
+use std::sync::mpsc::channel;
+
+use diesel::{
+    delete, insert_into, update, ExpressionMethods, QueryDsl, RunQueryDsl, SqliteConnection,
+};
 
 use crate::models::{Chain, NewChain, NewSignature, Signature};
 
@@ -42,7 +46,8 @@ pub fn scan_text(
                     to_word: token.1.as_str(),
                     to_word_signature_id: signature.id.clone(),
                     from_word_signature_id: signature.id.clone(),
-                    msg_id: message_id,
+                    from_word_msg_id: message_id,
+                    to_word_msg_id: message_id,
                 }])
                 .execute(conn)
                 .expect("Cannot insert the values!");
@@ -51,6 +56,7 @@ pub fn scan_text(
                 .set((
                     to_word.eq(token.1.as_str()),
                     to_word_signature_id.eq(signature.id.clone()),
+                    to_word_msg_id.eq(message_id.clone()),
                 ))
                 .execute(conn)
                 .expect("Cannot update the values!");
