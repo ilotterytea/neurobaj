@@ -6,7 +6,8 @@ CREATE TABLE
     "to_word" TEXT NOT NULL DEFAULT '\\x03',
     "from_word_signature_id" INTEGER NOT NULL,
     "to_word_signature_id" INTEGER NOT NULL,
-    "msg_id" TEXT NOT NULL,
+    "from_word_msg_id" TEXT NOT NULL,
+    "to_word_msg_id" TEXT NOT NULL,
     PRIMARY KEY ("id" AUTOINCREMENT)
   );
 

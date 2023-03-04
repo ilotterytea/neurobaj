@@ -8,7 +8,8 @@ pub struct Chain {
     pub to_word: String,
     pub from_word_signature_id: i32,
     pub to_word_signature_id: i32,
-    pub msg_id: String,
+    pub from_word_msg_id: String,
+    pub to_word_msg_id: String,
 }
 
 #[derive(Insertable)]
@@ -18,7 +19,8 @@ pub struct NewChain<'a> {
     pub to_word: &'a str,
     pub from_word_signature_id: i32,
     pub to_word_signature_id: i32,
-    pub msg_id: &'a str,
+    pub from_word_msg_id: &'a str,
+    pub to_word_msg_id: &'a str,
 }
 
 #[derive(Queryable)]

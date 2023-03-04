@@ -7,7 +7,8 @@ diesel::table! {
         to_word -> Text,
         from_word_signature_id -> Integer,
         to_word_signature_id -> Integer,
-        msg_id -> Text,
+        from_word_msg_id -> Text,
+        to_word_msg_id -> Text,
     }
 }
 
