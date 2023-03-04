@@ -3,7 +3,7 @@
 extern crate rocket;
 
 use chains::scan_text;
-use diesel::{Connection, ExpressionMethods, QueryDsl, RunQueryDsl, SqliteConnection};
+use diesel::{delete, Connection, ExpressionMethods, QueryDsl, RunQueryDsl, SqliteConnection};
 use once_cell::sync::Lazy;
 use std::{env, fs::File, path::Path, sync::Mutex, time::Instant};
 use tokio_js_set_interval::set_interval;
@@ -48,6 +48,65 @@ async fn main() {
                     msg.message_id.as_str(),
                     msg.message_text.as_str(),
                 ),
+                twitch_irc::message::ServerMessage::ClearMsg(msg) => {
+                    delete(crate::schema::chains::dsl::chains.filter(
+                        crate::schema::chains::dsl::from_word_msg_id.eq(msg.message_id.clone()),
+                    ))
+                    .execute(&mut establish_connection())
+                    .expect("Cannot delete the values!");
+                    delete(
+                        crate::schema::chains::dsl::chains
+                            .filter(crate::schema::chains::dsl::to_word_msg_id.eq(msg.message_id)),
+                    )
+                    .execute(&mut establish_connection())
+                    .expect("Cannot delete the values!");
+                }
+                twitch_irc::message::ServerMessage::ClearChat(msg) => match msg.action {
+                    twitch_irc::message::ClearChatAction::UserBanned {
+                        user_login: _,
+                        user_id,
+                    } => {
+                        let conn = &mut establish_connection();
+                        let signature = crate::chains::get_signature(
+                            conn,
+                            user_id.as_str(),
+                            msg.channel_id.as_str(),
+                        );
+                        delete(crate::schema::chains::dsl::chains.filter(
+                            crate::schema::chains::dsl::from_word_signature_id.eq(signature.id),
+                        ))
+                        .execute(conn)
+                        .expect("Cannot delete the values!");
+                        delete(crate::schema::chains::dsl::chains.filter(
+                            crate::schema::chains::dsl::to_word_signature_id.eq(signature.id),
+                        ))
+                        .execute(conn)
+                        .expect("Cannot delete the values!");
+                    }
+                    twitch_irc::message::ClearChatAction::UserTimedOut {
+                        user_login: _,
+                        user_id,
+                        timeout_length: _,
+                    } => {
+                        let conn = &mut establish_connection();
+                        let signature = crate::chains::get_signature(
+                            conn,
+                            user_id.as_str(),
+                            msg.channel_id.as_str(),
+                        );
+                        delete(crate::schema::chains::dsl::chains.filter(
+                            crate::schema::chains::dsl::from_word_signature_id.eq(signature.id),
+                        ))
+                        .execute(conn)
+                        .expect("Cannot delete the values!");
+                        delete(crate::schema::chains::dsl::chains.filter(
+                            crate::schema::chains::dsl::to_word_signature_id.eq(signature.id),
+                        ))
+                        .execute(conn)
+                        .expect("Cannot delete the values!");
+                    }
+                    _ => {}
+                },
                 _ => {}
             }
         }
