@@ -133,7 +133,7 @@ pub fn generate_text(conn: &mut SqliteConnection, initial_text: &str) -> String 
         }
     }
 
-    if message.len() == 0 {
+    if message.is_empty() {
         message.push_str("...");
     }
 
