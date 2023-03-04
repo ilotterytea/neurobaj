@@ -38,7 +38,7 @@ pub fn status() -> Json<Response<Status>> {
         status: 200,
         data: Status {
             total_chains: total_chains.len(),
-            joined_channels: joined_channels,
+            joined_channels,
             uptime_ms: ELAPSED_TIME.lock().unwrap().elapsed().as_millis(),
         },
     })
