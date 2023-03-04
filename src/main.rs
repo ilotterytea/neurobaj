@@ -5,13 +5,8 @@ extern crate rocket;
 use chains::scan_text;
 use diesel::{delete, Connection, ExpressionMethods, QueryDsl, RunQueryDsl, SqliteConnection};
 use once_cell::sync::Lazy;
-use std::{env, fs::File, path::Path, sync::Mutex, time::Instant};
-use tokio_js_set_interval::set_interval;
+use std::{env, sync::Mutex, time::Instant};
 use twitch_api::{
-    helix::{
-        channels::GetChannelInformationRequest,
-        users::{get_users, User},
-    },
     twitch_oauth2::{AppAccessToken, Scope},
     types::UserIdRef,
     TwitchClient,

@@ -1,8 +1,4 @@
-use std::sync::mpsc::channel;
-
-use diesel::{
-    delete, insert_into, update, ExpressionMethods, QueryDsl, RunQueryDsl, SqliteConnection,
-};
+use diesel::{insert_into, update, ExpressionMethods, QueryDsl, RunQueryDsl, SqliteConnection};
 
 use crate::models::{Chain, NewChain, NewSignature, Signature};
 
