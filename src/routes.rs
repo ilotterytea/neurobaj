@@ -1,7 +1,8 @@
+use diesel::{QueryDsl, RunQueryDsl};
 use rocket_contrib::json::Json;
 use serde::{Deserialize, Serialize};
 
-use crate::{CHAINS, CHANNELS, ELAPSED_TIME};
+use crate::{chains::generate_text, establish_connection, models::Chain, ELAPSED_TIME};
 
 #[derive(Serialize, Deserialize)]
 pub struct Response<T> {
@@ -18,16 +19,26 @@ pub struct Status {
 
 #[get("/gen?<message>")]
 pub fn gen_text(message: String) -> String {
-    CHAINS.lock().unwrap().generate_text(&message)
+    generate_text(&mut establish_connection(), message.as_str())
 }
 
 #[get("/status")]
 pub fn status() -> Json<Response<Status>> {
+    let conn = &mut establish_connection();
+
+    let total_chains = crate::schema::chains::dsl::chains
+        .load::<Chain>(conn)
+        .unwrap();
+    let joined_channels = crate::schema::channels::dsl::channels
+        .select(crate::schema::channels::dsl::alias_id)
+        .load::<String>(conn)
+        .unwrap();
+
     Json(Response {
         status: 200,
         data: Status {
-            total_chains: CHAINS.lock().unwrap().chains.len(),
-            joined_channels: CHANNELS.to_vec(),
+            total_chains: total_chains.len(),
+            joined_channels: joined_channels,
             uptime_ms: ELAPSED_TIME.lock().unwrap().elapsed().as_millis(),
         },
     })
