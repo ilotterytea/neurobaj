@@ -36,20 +36,24 @@ pub fn scan_text(
             .first::<Chain>(conn);
 
         if chain.is_err() {
-            insert_into(chains).values(vec![NewChain {
-                from_word: token.0.as_str(),
-                to_word: token.1.as_str(),
-                to_word_signature_id: signature.id.clone(),
-                from_word_signature_id: signature.id.clone(),
-                msg_id: message_id,
-            }]);
+            insert_into(chains)
+                .values(vec![NewChain {
+                    from_word: token.0.as_str(),
+                    to_word: token.1.as_str(),
+                    to_word_signature_id: signature.id.clone(),
+                    from_word_signature_id: signature.id.clone(),
+                    msg_id: message_id,
+                }])
+                .execute(conn)
+                .expect("Cannot insert the values!");
         } else {
             update(chains.filter(from_word.eq(token.0.as_str())))
                 .set((
                     to_word.eq(token.1.as_str()),
                     to_word_signature_id.eq(signature.id.clone()),
                 ))
-                .execute(conn);
+                .execute(conn)
+                .expect("Cannot update the values!");
         }
     }
 }
@@ -67,7 +71,8 @@ pub fn get_signature(conn: &mut SqliteConnection, user_id: &str, target_id: &str
                 channel_id: target_id.parse::<i32>().unwrap(),
                 sender_id: user_id.parse::<i32>().unwrap(),
             }])
-            .execute(conn);
+            .execute(conn)
+            .expect("Cannot insert the values!");
 
         signature = signatures
             .filter(sender_id.eq(user_id.parse::<i32>().unwrap()))
@@ -100,7 +105,7 @@ pub fn generate_text(conn: &mut SqliteConnection, initial_text: &str) -> String 
                 message.push(' ');
 
                 let chain = chains
-                    .filter(from_word.eq(_fc.to_word))
+                    .filter(from_word.eq(&_fc.to_word))
                     .first::<Chain>(conn);
 
                 if chain.is_err() {
@@ -114,7 +119,7 @@ pub fn generate_text(conn: &mut SqliteConnection, initial_text: &str) -> String 
                 message.push(' ');
 
                 let chain = chains
-                    .filter(from_word.eq(_nc.to_word))
+                    .filter(from_word.eq(&_nc.to_word))
                     .first::<Chain>(conn);
 
                 if chain.is_err() {
